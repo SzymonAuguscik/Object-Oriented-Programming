@@ -1,0 +1,207 @@
+import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+public class CV {
+    public static class Document {
+        String title;
+        Photo photo;
+        List<Section> sections = new ArrayList<>();
+
+        Document(String t) {
+            addTitle(t);
+        }
+
+        Document addTitle(String title) {
+            this.title = title;
+            return this;
+        }
+
+        Document addPhoto(String photoUrl) {
+            this.photo = new Photo(photoUrl);
+            return this;
+        }
+
+        Section addSection(String sectionTitle) {
+            Section s = new Section(sectionTitle);
+            this.sections.add(s);
+            return s;
+        }
+
+        Document addSection(Section s) {
+            sections.add(s);
+            return this;
+        }
+
+        void writeHTML(PrintStream out){
+            out.print("<?xml version=\"1.0\"?><!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n");
+            out.print("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
+            out.printf("<head>\n<title>%s</title>\n<meta http-equiv=\"Content-Type\" content=\"application/xhtml+xml;charset=UTF-8\" />\n</head>\n",this.title);
+            out.print("<body>\n");
+            out.printf("<h1>%s</h1>\n",this.title);
+            this.photo.writeHTML(out);
+
+            for (Section x : this.sections) {
+                x.writeHTML(out);
+            }
+
+            out.print("</body>\n</html>\n");
+        }
+    }
+
+    public static class Photo {
+        Photo(String url){
+            this.url = url;
+        }
+
+        String url;
+
+        void writeHTML(PrintStream out) {
+            out.printf("<img src=\"%s\" alt=\"Smiley face\" height=\"250\" width=\"250\"/>\n",url);
+        }
+    }
+
+    public static class Section {
+        String title;
+        List<Paragraph> paragraphs = new ArrayList<>();
+
+        Section(String s) {
+            this.title = s;
+        }
+
+        Section setTitle(String stringTitle) {
+            title = stringTitle;
+            return this;
+        }
+
+        Section addParagraph(String paragraphText) {
+            Paragraph p = new Paragraph(paragraphText);
+            paragraphs.add(p);
+            return this;
+        }
+
+        Section addParagraph(Paragraph p) {
+            paragraphs.add(p);
+            return this;
+        }
+
+        void writeHTML(PrintStream out) {
+            out.printf("<h2>%s</h2>\n",this.title);
+
+            for(Paragraph x : this.paragraphs) {
+                x.writeHTML(out);
+            }
+        }
+    }
+
+    public static class Paragraph {
+        String content;
+
+        Paragraph(String s) {
+            setContent(s);
+        }
+
+        Paragraph setContent(String c) {
+            this.content = c;
+            return this;
+        }
+
+        void writeHTML(PrintStream out) {
+            out.printf("<p>%s</p>\n",this.content);
+        }
+    }
+
+    public static class ListItem {
+        String content;
+
+        ListItem(String s) {this.content = s;}
+
+        void writeHTML(PrintStream out) {
+            out.printf("<li>%s</li>\n",content);
+        }
+    }
+
+    public static class UnorderedList {
+        ArrayList<ListItem> items = new ArrayList<>();
+
+        ListItem addItem(String s) {
+            ListItem item = new ListItem(s);
+            this.items.add(item);
+            return item;
+        }
+
+        UnorderedList addItem(ListItem l) {
+            this.items.add(l);
+            return this;
+        }
+
+        void writeHTML(PrintStream out) {
+            out.print("<ul>\n");
+            for (ListItem x : this.items)
+            {
+                x.writeHTML(out);
+            }
+            out.print("</ul>\n");
+        }
+    }
+
+    public static class ParagraphWithList extends Paragraph {
+        UnorderedList list = new UnorderedList();
+        ParagraphWithList(String s){
+            super(s);
+            setContent(s);
+        }
+
+        ParagraphWithList addItemToList(String s) {
+            ListItem item = new ListItem(s);
+            this.list.addItem(item);
+            return this;
+        }
+
+        void writeHTML(PrintStream out) {
+            out.printf("<h3>%s</h3>",this.content);
+            this.list.writeHTML(out);
+        }
+    }
+
+    public static void main (String [] args) throws IOException {
+        Document cv = new Document("Taco Hemingway");
+        cv.addPhoto("https://www.tuwroclaw.com/images/galbig3/news/43520/taco2_5b84037c41cab7_26170003.jpg.jpg");
+        cv.addSection("Wykształcenie")
+                .addParagraph("Wydział Antropologii Uniwersytetu Londyńskiego")
+                .addParagraph("Uniwersytet Warszawski")
+                .addParagraph("XXXIII Liceum Ogólnokształcące Dwujęzyczne im. Mikołaja Kopernika w Warszawie")
+                .addParagraph("Prywatne Gimnazjum nr 1 w Warszawie")
+                .addParagraph("Przedszkole w Chinach");
+        cv.addSection("Umiejętności")
+                .addParagraph("Płynne posługiwanie się językiem angielskim")
+                .addParagraph("Szybkie mówienie")
+                .addParagraph("Zjednywanie sobie milionów fanów");
+        cv.addSection("Dyskografia")
+                .addParagraph(new ParagraphWithList("Szprycer")
+                        .addItemToList("Nostalgia")
+                        .addItemToList("Chodź")
+                        .addItemToList("Tlen")
+                        .addItemToList("Głupi Byt")
+                        .addItemToList("Dele")
+                        .addItemToList("I.S.W.T.")
+                        .addItemToList("35")
+                        .addItemToList("Karimata")
+                        .addItemToList("Saldo '07"))
+                .addParagraph(new ParagraphWithList("Cafe Belga")
+                        .addItemToList("Cafe Belga")
+                        .addItemToList("ZTM")
+                        .addItemToList("Wszystko na niby")
+                        .addItemToList("Reżyseria: Kubrick")
+                        .addItemToList("2031")
+                        .addItemToList("Fiji")
+                        .addItemToList("Abonent jest czasowo niedostępny")
+                        .addItemToList("Motorola")
+                        .addItemToList("Modigliani")
+                        .addItemToList("Adieu")
+                        .addItemToList("4 AM in Girona"));
+        cv.writeHTML(new PrintStream("cv.html", StandardCharsets.UTF_8));
+    }
+}
